@@ -1,0 +1,11 @@
+path-prefix,owner,group,mode,kind
+/,admin,admins,755,directory
+/projects,alice,students,771,directory
+/projects/report.txt,alice,students,640,file
+/projects/public,alice,students,755,directory
+/projects/public/readme.txt,alice,students,644,file
+/projects/internal,alice,students,750,directory
+/projects/internal/notes.txt,alice,students,640,file
+/projects/confidential,admin,admins,700,directory
+/projects/confidential/secret.txt,admin,admins,600,file
+/admin,admin,admins,700,directory

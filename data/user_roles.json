@@ -1,0 +1,6 @@
+{
+  "alice": ["analyst"],
+  "bob": ["analyst"],
+  "eve": ["visitor"],
+  "admin": ["admin"]
+}

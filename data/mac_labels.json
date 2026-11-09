@@ -1,0 +1,15 @@
+{
+  "users": {
+    "alice": "internal",
+    "bob": "internal",
+    "eve": "public",
+    "admin": "confidential"
+  },
+  "labels": {
+    "/projects": "internal",
+    "/projects/public": "public",
+    "/admin": "confidential",
+    "/projects/internal": "internal",
+    "/projects/confidential": "confidential"
+  }
+}
