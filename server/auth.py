@@ -21,8 +21,17 @@ def scrypt_hash(password: str, salt: bytes, n: int = SCRYPT_N, r: int = SCRYPT_R
 p: int = SCRYPT_P, dklen: int = DKLEN) -> bytes:
     return hashlib.scrypt(password.encode("utf-8"), salt=salt, n=n, r=r, p=p, dklen=dklen)
 
+def verify_user_password(username : str, password:str, users):
+    user = next((u for u in users if u["username"] == username), None)
+    if user is None: 
+        return False
+    else: 
+        return verify_password(password, user["salt"], user["password_hash"], 
+        user["n"], user["r"], user["p"], user['dklen'])
+
+
 # verify the password 
-def verify_user_password(input_pw: str, stored_salt_b64: str, stored_hash_b64: str,
+def verify_password(input_pw: str, stored_salt_b64: str, stored_hash_b64: str,
 n: int = SCRYPT_N, r: int = SCRYPT_R, p: int = SCRYPT_P,
 dklen: int = DKLEN) -> bool:
     """Return True iff input_pw matches stored hash.

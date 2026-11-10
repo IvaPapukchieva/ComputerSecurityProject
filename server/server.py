@@ -433,6 +433,9 @@ class SFTPSession(asyncssh.SSHServerSession):
             self._send_status(req_id, SSH_FX_FAILURE, b"failure")
 
 class Server(asyncssh.SSHServer):
+    def __init__(self):
+        self.users = auth.load_users(os.path.join(DATA_DIR, "users.json"))
+
     # Tell AsyncSSH we will do user auth:
     def begin_auth(self, username):  # called when a new user starts auth
         self.username = username
@@ -441,8 +444,8 @@ class Server(asyncssh.SSHServer):
     def password_auth_supported(self):
         return True
 
-    def verify_password(self, username, password):
-        return auth.verify_user_password(username, password)
+    def validate_password(self, username, password):
+        return auth.verify_user_password(username, password, self.users)
 
     def session_requested(self):
         return SFTPSession(self.username)
@@ -464,7 +467,7 @@ async def main():
     await asyncssh.listen(
         LISTEN_HOST, LISTEN_PORT,
         server_host_keys=[HOST_KEY_PATH],  # server identity key
-        server_factory=Server              # our auth & session handler
+        server_factory=Server             # our auth & session handler
     )
     print(f"SFTP listening on {LISTEN_HOST or '0.0.0.0'}:{LISTEN_PORT} (subsystem '{SFTP_SUBSYSTEM_NAME}')")
     await asyncio.Event().wait()
