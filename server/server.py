@@ -441,8 +441,8 @@ class Server(asyncssh.SSHServer):
     def password_auth_supported(self):
         return True
 
-    def validate_password(self, username, password):
-        return auth.validate_user_password(username, password)
+    def verify_password(self, username, password):
+        return auth.verify_user_password(username, password)
 
     def session_requested(self):
         return SFTPSession(self.username)
