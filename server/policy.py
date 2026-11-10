@@ -134,6 +134,12 @@ def _load_policy(directory: Path) -> Policy:
         if not owners:
             raise ValueError("dac_owners.csv must contain at least one ownership rule")
 
+
+        # Every user automatically gets the "base" role, if role_perms.csv defines it
+        DEFAULT_ROLE = "base"
+        if DEFAULT_ROLE in role_perms:
+            user_roles = {u: tuple(dict.fromkeys((DEFAULT_ROLE,) + rs)) for u, rs in user_roles.items()}
+            
         for user, assigned in user_roles.items():
             unknown = set(assigned) - set(role_perms)
             if unknown:

@@ -3,3 +3,4 @@ analyst,/projects,allow,allow,,,,,deny,allow,allow,allow
 analyst,/projects/public,allow,,,,,,,,allow,allow
 visitor,/projects/public,allow,,,,,,,,allow,allow
 admin,/,allow,allow,allow,allow,allow,allow,allow,allow,allow,allow
+base,/,,,,,,,,allow,allow,allow
