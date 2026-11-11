@@ -1,1 +1,18 @@
+# SSH host private key: per-deployment secret, never commit
 ssh_host_ed25519_key
+
+# Client TOFU store: per-machine
+client/known_hosts
+
+# Python bytecode / caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# IDE / editor files (PyCharm .idea/*.xml, *.iml; VS Code)
+.idea/
+*.iml
+.vscode/
+
+# Partial downloads left by an interrupted client 'get'
+*.part
