@@ -34,5 +34,11 @@
     "p": 1,
     "dklen": 32
     
+    },
+    {
+    "username": "admin",
+    "salt": "6FgT7XTzE4dVQTm/G5PoLw==",
+    "password_hash": "wFonFMp83QBO5gc48v8B0AI58xqL2gMkXysg86K/0Ao=",
+    "n": 16384, "r": 8, "p": 1, "dklen": 32
     }
 ]

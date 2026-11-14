@@ -3,6 +3,8 @@
 Call authorize() before working with a file or directory. 
 The path must already be a canonical POSIX path inside the jail. 
 Resolving paths and checking jail boundaries are the SFTP server's responsibility.
+
+Gen AI was used to help structure the policy rules, parsing logic, and audit logging.
 """
 
 from __future__ import annotations
@@ -10,7 +12,6 @@ from __future__ import annotations
 import csv
 import json
 import logging
-import os
 import threading
 from dataclasses import dataclass
 from datetime import datetime, timezone

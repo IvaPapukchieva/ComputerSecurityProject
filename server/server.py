@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
+"""
+SFTP v3 Server implementation over AsyncSSH.
+Gen AI was used to assist with SFTP v3 wire framing, packet parsing, and hardening path/handle checks.
+"""
 import asyncio, asyncssh, os, struct, stat, sys, time, posixpath
-import logging, traceback
+import logging
 
 # Logging must be set up BEFORE importing policy, so its "Loaded ..." lines are shown
 logging.basicConfig(level=logging.INFO,
@@ -21,6 +25,7 @@ SFTP_SUBSYSTEM_NAME = 'sftp'
 JAIL_ROOT = os.path.join(BASE_DIR, 'sftp_root')
 DATA_DIR = os.path.join(os.path.dirname(BASE_DIR), 'data') # repo/data
 MAX_READ = 64 * 1024
+MAX_PACKET = 256 * 1024  # 256 KB max packet size to prevent high memory usage
 
 # --- SFTP constants (subset for INIT/REALPATH/OPENDIR/READDIR/CLOSE) ---
 SSH_FXP_INIT, SSH_FXP_VERSION = 1, 2
@@ -35,6 +40,7 @@ SSH_FXP_WRITE               = 6
 SSH_FXP_MKDIR               = 14
 SSH_FXP_DATA = 103
 SSH_FXP_READ = 5
+SSH_FXP_REMOVE = 13
 
 # pflags
 PF_READ, PF_WRITE, PF_APPEND, PF_CREAT, PF_TRUNC, PF_EXCL = 0x1, 0x2, 0x4, 0x8, 0x10, 0x20
@@ -64,7 +70,7 @@ def parse_attrs_ignore(buf, off):
 def canon_sftp_path(path_bs: bytes) -> str:
     """Return a canonical SFTP path (POSIX-style) relative to jail root."""
     s = path_bs.decode("utf-8", errors="strict").replace("\\", "/")
-    if "\x00" in s:
+    if "\x00" in s or ":" in s:
         raise PermissionError("bad path")
     p = posixpath.normpath("/" + s) # leading '/' means '..' can't go above root
     return "/" + p.lstrip("/") # normpath may keep '//' at the start
@@ -103,8 +109,14 @@ class DirHandle:
     def __init__(self, entries): self.entries, self.idx = entries, 0
 
 class Handles:
-    def __init__(self): self._n, self._map = 1, {}
-    def add(self, obj): 
+    def __init__(self, max_handles=100): 
+        self._n, self._map = 1, {}
+        self._max_handles = max_handles
+
+    def add(self, obj):
+        # Prevent overflow of opened files
+        if len(self._map) >= self._max_handles:
+            raise OSError("Too many open handles") 
         hid = str(self._n).encode()
         self._n += 1
         self._map[hid] = obj
@@ -193,10 +205,17 @@ class SFTPSession(asyncssh.SSHServerSession):
         print(f"[SESSION] {self.username} disconnected, closing {len(self.handles._map)} handle(s)")
         self.handles.close_all()
 
-    def _resolve(self, path_bs):
-        """Jail check. Returns (sftp_path, os_path)."""
-        full = safe_join(JAIL_ROOT, path_bs)
-        return to_vpath(JAIL_ROOT, full), full
+    def _resolve(self, path_bs, op="access"):
+        """Convert the requested SFTP path to an absolute path on disk while making sure it stays inside the jail."""
+        # Try to resolve and safely constrain the path within the jail root
+        try:
+            full = safe_join(JAIL_ROOT, path_bs)
+            return to_vpath(JAIL_ROOT, full), full
+        # If the path attempts a traversal outside the jail or has bad characters, log it to audit and block
+        except PermissionError as e:
+            raw_path = path_bs.decode("utf-8", errors="replace")
+            policy._audit(self.username, op, raw_path, False, f"Jail boundary violation: {e}")
+            raise
 
     def _authorize(self, op, vpath):
         """Raises PermissionError -> STATUS(PERMISSION_DENIED)."""
@@ -212,6 +231,16 @@ class SFTPSession(asyncssh.SSHServerSession):
         self.buf += data
         while len(self.buf) >= 4:
             n, = struct.unpack(">I", self.buf[:4])
+            if n == 0 or n > MAX_PACKET:
+                print(f"[SECURITY] Invalid packet length {n} from {self.username}. Terminating channel.")
+                if hasattr(self, "_chan") and self._chan:
+                    try:
+                        self._send_status(0, SSH_FX_FAILURE, b"packet length exceeds safety limit or is zero")
+                        self._chan.close()
+                    except Exception:
+                        pass
+                self.buf = b""
+                return
             if len(self.buf) < 4 + n:
                 break
             pkt = self.buf[4:4+n]
@@ -259,7 +288,7 @@ class SFTPSession(asyncssh.SSHServerSession):
             if ptype == SSH_FXP_REALPATH:
                 path, off = ustr(payload, off)
                 canon = canon_sftp_path(path)
-                vpath, full = self._resolve(path)
+                vpath, full = self._resolve(path, "realpath")
                 self._authorize("realpath", vpath)
                 try:
                     attrs = sftp_attrs_from_stat(os.stat(full))
@@ -271,7 +300,7 @@ class SFTPSession(asyncssh.SSHServerSession):
 
             elif ptype in (SSH_FXP_STAT, SSH_FXP_LSTAT):
                 path, off = ustr(payload, off)
-                vpath, full = self._resolve(path)
+                vpath, full = self._resolve(path, "stat")
                 self._authorize("stat", vpath)
                 try:
                     st = os.lstat(full) if ptype == SSH_FXP_LSTAT else os.stat(full)
@@ -283,16 +312,18 @@ class SFTPSession(asyncssh.SSHServerSession):
                 self._chan.write(pack_pkt(SSH_FXP_ATTRS, p_u32(req_id) + sftp_attrs_from_stat(st)))
 
             elif ptype == SSH_FXP_FSTAT:
+                handle_bs, off = ustr(payload, off)
                 h = self.handles.get(handle_bs)
                 if not isinstance(h, FileHandle):
                     self._send_status(req_id, SSH_FX_FAILURE, b"bad file handle")
                     return
+                self._authorize("stat", h.vpath)
                 st = os.fstat(h.fd)
                 self._chan.write(pack_pkt(SSH_FXP_ATTRS, p_u32(req_id) + sftp_attrs_from_stat(st)))
 
             elif ptype == SSH_FXP_OPENDIR:
                 path, off = ustr(payload, off)
-                vpath, full = self._resolve(path)
+                vpath, full = self._resolve(path, "list")
                 self._authorize("list", vpath)
                 entries = list(os.scandir(full))
                 handle = self.handles.add(DirHandle(entries))
@@ -326,7 +357,7 @@ class SFTPSession(asyncssh.SSHServerSession):
                 path, off = ustr(payload, off)
                 off = parse_attrs_ignore(payload, off) # ignore attrs (mode, etc.)
                 try:
-                    vpath, full = self._resolve(path)
+                    vpath, full = self._resolve(path, "mkdir")
                     self._authorize("mkdir", vpath)
                     print(f"[MKDIR] {self.username}: {vpath}")
                     os.mkdir(full) # exactly one dir, no parents
@@ -346,7 +377,7 @@ class SFTPSession(asyncssh.SSHServerSession):
                 filename, off = ustr(payload, off)
                 pflags, off = u32(payload, off)
                 off = parse_attrs_ignore(payload, off)
-                vpath, full = self._resolve(filename)
+                vpath, full = self._resolve(filename, "open")
 
                 want_read = bool(pflags & PF_READ)
                 want_write = bool(pflags & (PF_WRITE | PF_APPEND | PF_CREAT | PF_TRUNC))
@@ -355,6 +386,9 @@ class SFTPSession(asyncssh.SSHServerSession):
                 if want_read:
                     self._authorize("read", vpath)
                 if want_write:
+                    is_new = bool(pflags & PF_CREAT) and not os.path.exists(full)
+                    if is_new:
+                        self._authorize("create", vpath)
                     self._authorize("write", vpath)
 
                 if want_read and want_write: flags = os.O_RDWR
@@ -368,12 +402,23 @@ class SFTPSession(asyncssh.SSHServerSession):
                 flags |= getattr(os, "O_NOFOLLOW", 0)    # refuse a symlink swapped in after the check
 
                 fd = os.open(full, flags, 0o644)
-                if stat.S_ISDIR(os.fstat(fd).st_mode):
-                    os.close(fd)
-                    raise IsADirectoryError(vpath)
+                try:
+                    st_fd = os.fstat(fd)
+                    if stat.S_ISDIR(st_fd.st_mode):
+                        raise IsADirectoryError(vpath)
 
-                print(f"[OPEN] {self.username}: {vpath} read={want_read} write={want_write}")
-                handle = self.handles.add(FileHandle(fd, vpath, want_read, want_write))
+                    # Cross-platform symlink check: verify target path stayed inside jail after opening
+                    real_target = os.path.realpath(full)
+                    jail = os.path.realpath(JAIL_ROOT)
+                    if not (real_target == jail or real_target.startswith(jail + os.sep)):
+                        raise PermissionError("symlink escape")
+
+                    print(f"[OPEN] {self.username}: {vpath} read={want_read} write={want_write}")
+                    handle = self.handles.add(FileHandle(fd, vpath, want_read, want_write))
+                except Exception:
+                    # Close fd if handle creation fails
+                    os.close(fd)
+                    raise
                 self._chan.write(pack_pkt(SSH_FXP_HANDLE, p_u32(req_id) + handle))
 
             elif ptype == SSH_FXP_WRITE:
@@ -388,6 +433,7 @@ class SFTPSession(asyncssh.SSHServerSession):
                 if not h.can_write:
                     self._send_status(req_id, SSH_FX_PERMISSION_DENIED, b"not opened for writing")
                     return
+                self._authorize("write", h.vpath)
                 os.lseek(h.fd, offset, os.SEEK_SET)
                 view = memoryview(data)
                 while view:
@@ -406,12 +452,26 @@ class SFTPSession(asyncssh.SSHServerSession):
                 if not h.can_read:
                     self._send_status(req_id, SSH_FX_PERMISSION_DENIED, b"not opened for reading")
                     return
+                self._authorize("read", h.vpath)
                 os.lseek(h.fd, offset, os.SEEK_SET)
                 data = os.read(h.fd, min(length, MAX_READ))
                 if not data:
                     self._send_status(req_id, SSH_FX_EOF, b"EOF")
                 else:
                     self._chan.write(pack_pkt(SSH_FXP_DATA, p_u32(req_id) + p_str(data)))
+
+            elif ptype == SSH_FXP_REMOVE:
+                path, off = ustr(payload, off)
+                vpath, full = self._resolve(path, "remove")
+                self._authorize("remove", vpath)
+                if os.path.isdir(full):
+                    self._send_status(req_id, SSH_FX_FAILURE, b"is a directory")
+                    return
+                try:
+                    os.remove(full)
+                    self._send_status(req_id, SSH_FX_OK, b"OK")
+                except IsADirectoryError:
+                    self._send_status(req_id, SSH_FX_FAILURE, b"is a directory")
                     
             elif ptype == SSH_FXP_CLOSE:
                 handle_bs, off = ustr(payload, off)
@@ -435,20 +495,25 @@ class SFTPSession(asyncssh.SSHServerSession):
 class Server(asyncssh.SSHServer):
     def __init__(self):
         self.users = auth.load_users(os.path.join(DATA_DIR, "users.json"))
+        self.authenticated_user = None # Currently no user authenticated
 
     # Tell AsyncSSH we will do user auth:
     def begin_auth(self, username):  # called when a new user starts auth
-        self.username = username
         return True  # start authentication
 
     def password_auth_supported(self):
         return True
 
     def validate_password(self, username, password):
-        return auth.verify_user_password(username, password, self.users)
+        if auth.verify_user_password(username, password, self.users):
+            self.authenticated_user = username # Set up user in the system
+            return True
+        return False
 
     def session_requested(self):
-        return SFTPSession(self.username)
+        if not self.authenticated_user:
+            return False
+        return SFTPSession(self.authenticated_user)
 
 async def main():
     if not os.path.exists(HOST_KEY_PATH):

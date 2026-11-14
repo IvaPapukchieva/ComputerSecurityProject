@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Usage: python client/client.py --host 127.0.0.1 --port 2222 --username bob
-gen AI was used for help with the implementation, starting from assyncssh doc and paramiko implementation on github
+Gen AI was used for help with the implementation, starting from asyncssh doc and paramiko implementation on github.
 """
 import argparse
 import asyncio
@@ -437,6 +437,7 @@ async def connect(host, port, username, password, known_hosts):
         client_keys=None,  # password auth only
         agent_path=None,
         preferred_auth="password",
+        x509_trusted_certs=None
     )
     try:
         writer, reader, _ = await conn.open_session(subsystem="sftp", encoding=None)

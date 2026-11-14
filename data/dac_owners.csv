@@ -9,3 +9,4 @@ path-prefix,owner,group,mode,kind
 /projects/confidential,admin,admins,700,directory
 /projects/confidential/secret.txt,admin,admins,600,file
 /admin,admin,admins,700,directory
+/admin/flag.txt,admin,admins,600,file
