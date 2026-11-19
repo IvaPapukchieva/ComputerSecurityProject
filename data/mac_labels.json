@@ -7,9 +7,7 @@
   },
   "labels": {
     "/projects": "internal",
-    "/projects/public": "public",
-    "/admin": "confidential",
-    "/projects/internal": "internal",
-    "/projects/confidential": "confidential"
+    "/projects/confidential": "confidential",
+    "/admin": "confidential"
   }
 }

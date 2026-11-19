@@ -43,6 +43,10 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
+### Cross-Platform & Environment Notes
+- **POSIX Normalization:** SFTP paths are normalized strictly using POSIX conventions (`/`) regardless of the host OS, preventing path delimiter confusion across Windows, Linux, and macOS.
+- **Windows Host Considerations:** On Windows systems, running in an elevated terminal or enabling Windows Developer Mode is recommended for full POSIX filesystem metadata and link reference compatibility. Alternatively, WSL or Linux provides native POSIX behavior.
+
 ---
 
 ## Server
@@ -64,7 +68,7 @@ python server/server.py
 ```
 
 *Notes:*
-- The server will automatically create `server/sftp_root` as the jail directory if it does not already exist.
+- The server automatically creates `server/sftp_root` on startup if it doesn't exist, and sets up the initial folders and test files.
 - On startup, the server loads and validates all static dataset files from `data/` (`users.json`, `user_roles.json`, `role_perms.csv`, `mac_labels.json`, `dac_owners.csv`, `user_groups.json`). Malformed or missing files cause a clean startup failure with a readable error message.
 
 ---
@@ -107,9 +111,9 @@ Server errors are shown cleanly (e.g. `remote: permission denied`) and the inter
 
 ```text
 sftp> ls
--rw-rw-rw-   0 0        0               0 Nov 11 12:09 Test.txt
-drwxrwxrwx   0 0        0               0 Nov 11 12:09 admin
-drwxrwxrwx   0 0        0               0 Nov 11 12:09 projects
+-rw-r--r--   0 0        0              28 Nov 19 22:00 welcome.txt
+drwxr-xr-x   0 0        0               0 Nov 19 22:00 admin
+drwxrwx--x   0 0        0               0 Nov 19 22:00 projects
 sftp> put README.md /projects/README.md
 Uploaded README.md -> /projects/README.md (17553 bytes)
 sftp> ls /admin
@@ -188,7 +192,7 @@ All three security models must agree and return `True`. If even one model says `
 
 | Scenario | DAC | MAC | RBAC | Final Outcome | Explanation |
 |---|:---:|:---:|:---:|:---:|---|
-| **Eve reading `/projects/internal/public_dac.txt`** | ALLOW (mode 666) | DENY (clearance 0 < label 1) | ALLOW (visitor role) | **DENY** | Blocked by MAC "No Read Up". |
+| **Eve reading `/projects/project_plan.txt`** | ALLOW (mode 664 other read) | DENY (clearance 0 < label 1) | DENY (no role grant) | **DENY** | Blocked by MAC "No Read Up" and RBAC. |
 | **Alice creating folder `/projects/new_dir`** | ALLOW (owner mode) | ALLOW (clearance 1) | DENY (analyst lacks mkdir) | **DENY** | Blocked by RBAC: role lacks mkdir grant. |
 | **Bob writing to `/admin/flag.txt`** | DENY (mode 600 admin) | DENY (clearance 1 < label 2) | DENY (no admin role) | **DENY** | All three models deny access. |
 | **Admin reading `/admin/flag.txt`** | ALLOW (owner mode 600) | ALLOW (clearance 2) | ALLOW (admin role) | **ALLOW** | All three models agree and allow access. |
@@ -203,6 +207,21 @@ Example audit records:
 {"user":"admin","op":"read","path":"/admin/flag.txt","allowed":true,"reason":"DAC: owner mode on /admin/flag.txt allows read; MAC: clearance permits operation; RBAC: granted by role(s) base, admin","timestamp":"2026-11-14T16:32:16.565472+00:00"}
 ```
 
+### 8. Jail Filesystem Structure & Test Datasets
+
+The server roots all SFTP operations inside `server/sftp_root/`. When started, the server creates the initial folders and test files to demonstrate access control policies:
+
+| Path in Jail | Owner:Group | Mode | MAC Label | Purpose / Description |
+|---|---|---|---|---|
+| `/welcome.txt` | `admin:admins` | `644` | `public` (0) | Root public welcome notice, readable by all users (including `visitor` `eve`). |
+| `/projects` | `alice:students` | `771` | `internal` (1) | Collaborative directory for analysts (`students` group). |
+| `/projects/project_plan.txt` | `alice:students` | `664` | `internal` (1) | Project planning document, readable/writable by group `students`. |
+| `/projects/shared_notes.txt` | `alice:students` | `664` | `internal` (1) | Collaborative team notes. |
+| `/projects/confidential` | `admin:admins` | `700` | `confidential` (2) | Confidential project enclave; non-admin users blocked. |
+| `/projects/confidential/audit_report.txt` | `admin:admins` | `600` | `confidential` (2) | Confidential audit report inside enclave. |
+| `/admin` | `admin:admins` | `700` | `confidential` (2) | Administrator folder; restricted to `admin`. |
+| `/admin/flag.txt` | `admin:admins` | `600` | `confidential` (2) | Protected administrative flag. |
+
 ---
 
 ## Predefined Users Directory
@@ -214,7 +233,7 @@ Plaintext passwords are never stored in the project files. Passwords are saved a
 | **`admin`** | `admin`, `base` | `confidential` (2) | `admins` | Server administrator. Has full access across `/` and `/admin`, can create directories and manage files. Under MAC rules, cannot write down into public files. |
 | **`alice`** | `analyst`, `base` | `internal` (1) | `students` | Project owner and data analyst. Can read and write under `/projects`, but cannot access confidential resources under `/admin`. |
 | **`bob`** | `analyst`, `base` | `internal` (1) | `students` | Colleague analyst in `students` group. Can access group-readable files in `/projects`, but cannot access Alice's private files or `/admin`. |
-| **`eve`** | `visitor`, `base` | `public` (0) | `guests` | Guest user. Restricted strictly to reading public files under `/projects/public`. Cannot write anywhere or view internal/confidential documents. |
+| **`eve`** | `visitor`, `base` | `public` (0) | `guests` | Guest user. Restricted strictly to reading public files such as `/welcome.txt`. Cannot write anywhere or view internal/confidential documents under `/projects` or `/admin`. |
 
 ---
 

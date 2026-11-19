@@ -90,12 +90,12 @@ This means that in order to get access, **all the levels should agree upon allow
 
 ---
 
-## 4. Evidence and Audit Logs
+## 4. Evidence of Hardened Protections & Audit Verification
 
 The server logs every single authorization decision into `server/audit.jsonl` with structured fields: `user`, `op`, `path`, `allowed`, `reason`, and a UTC `timestamp`.
 
 ### Evidence 1: Terminal Session of Blocked Attacks (Unauthorized User)
-When an unauthorized user (`bob`, holding `analyst` role and `internal` clearance) attempts to list the `/admin` directory, download `/admin/flag.txt`, or perform path traversal, the client terminal clearly displays access denials:
+When an unauthorized user (`bob`, holding `analyst` role and `internal` clearance) attempts to list the `/admin` directory, download `/admin/flag.txt`, or perform path traversal (`../../admin/flag.txt`), the client terminal clearly displays access denials:
 
 ![Unauthorized Access Attempt](images/Unauthorized.png)
 
@@ -120,10 +120,76 @@ And `server/audit.jsonl` logs the authorized retrieval:
 
 ---
 
-## 5. Summary
+## 5. CTF Challenge: Intentional Vulnerability (Confused Deputy)
 
-By combining the jail with a default-deny check (DAC ∧ MAC ∧ RBAC), the flag is protected by multiple layers:
-* Even if an attacker knows the path, path normalization prevents traversal tricks.
-* Even if one layer were accidentally misconfigured, the other two layers still block access.
-* Every attack attempt is immediately written to `audit.jsonl`, making it easy to track and review all denied attempts in the logs.
+Having verified that our baseline design successfully stops all direct path traversal, credential abuse, and unauthorized access, our implementation includes an intentional, realistic, and subtle flaw for the peer-swap CTF challenge based on a classic security anti-pattern: **Confused Deputy Link Resolution**.
+
+### The Underlying Anti-Pattern
+In secure file servers, authorization must always be checked against the **fully resolved canonical target** of a file, not the path alias or symbolic link requested by the client.
+
+In `server/server.py`, `_resolve()` contains a subtle discrepancy:
+```python
+# In SFTPSession._resolve():
+vpath = canon_sftp_path(path_bs)      # Requested virtual path (e.g., /projects/shared_notes.txt)
+full = safe_join(JAIL_ROOT, path_bs)  # Real OS path (dereferences symlink to sftp_root/admin/flag.txt)
+return vpath, full
+```
+1. `safe_join()` verifies that the target path does not escape the jail root (`sftp_root`). A symlink pointing outside the jail (e.g. to `/etc/passwd` or `C:\Windows`) is detected and blocked.
+2. **However, `vpath` is returned as the requested virtual path (`/projects/shared_notes.txt`) rather than the dereferenced target path (`/admin/flag.txt`).**
+3. The server then calls `self._authorize("read", vpath)`. Because the link is located in `/projects/`:
+   * **DAC:** Bob belongs to group `students`, matching mode `0664` / `0771` on `/projects` $\rightarrow$ **ALLOW**.
+   * **MAC:** The link resides under `/projects` (labeled `internal`, level 1). Bob has clearance `internal` (level 1) $\rightarrow$ **ALLOW (No Read Up satisfied)**.
+   * **RBAC:** Bob's `analyst` role permits reading under prefix `/projects` $\rightarrow$ **ALLOW**.
+4. The composite gate returns `True`.
+5. The server then executes `os.open(full)`. The OS dereferences `full` to `server/sftp_root/admin/flag.txt`, creating an open file handle to the secret admin flag!
+6. When Bob sends `SSH_FXP_READ`, the server re-authorizes `h.vpath` (`/projects/shared_notes.txt` $\rightarrow$ **ALLOW**) and reads the flag content.
+
+### Exploit Walkthrough & Pre-Seeded Artifact
+We pre-seeded a relative symbolic link inside the jail at `server/sftp_root/projects/shared_notes.txt` pointing to `../admin/flag.txt`.
+
+#### Why We Pre-Seeded This File (Challenge Design Rationale)
+In this CTF challenge, the file is pre-seeded intentionally on the server for several practical reasons:
+1. **Network SFTP Protocol Boundary:** The server implements the standard SFTP v3 subset for file transfers (`OPEN`, `READ`, `WRITE`, etc.) but does not implement `SSH_FXP_SYMLINK` (SFTP packet type 20). Furthermore, SSH shell and exec channels are disabled (`shell_requested = False`). Consequently, a remote peer team connecting over the network has no command to create arbitrary symlinks on the remote filesystem.
+2. **Operating System Privilege Isolation & Runtime Setup:** On Windows hosts, creating symbolic links requires elevated administrative privileges or Developer Mode. While the distribution archive adheres to course requirements by keeping `server/sftp_root/` initially empty, pre-seeding the link inside the jail workspace at runtime (via `init_jail_workspace()` on server startup) ensures that the CTF challenge is automatically initialized across platforms without requiring manual intervention from the peer group.
+3. **Realistic Reconnaissance Scenario:** In real-world enterprise environments, shared developer directories (like `/projects`) often contain pre-existing links, shared build references, or repository shortcuts. To make the challenge authentic and deceptive rather than trivial, the link is named `shared_notes.txt` alongside legitimate project documents (`project_plan.txt`), blending in with normal team activity. The objective for the peer team is **reconnaissance and anomaly detection**: by enumerating accessible directories (`ls /projects`), checking file metadata, noticing the link, and recognizing that the server evaluates authorization on the requested alias rather than the dereferenced destination, they can execute the exploit.
+4. **Accessible Entry Point & Human Factor:** For an easy entry point, we intentionally left Bob's password easy (`test`) while keeping other passwords strong. This way, an attacker could easily compromise Bob's account due to the human factor (weak password hygiene) and use it as an initial foothold for reconnaissance and exploitation.
+
+#### Attack Steps:
+1. **Initial Access via Human Factor:** An attacker starts by compromising an entry-level account. While accounts like `admin` and `alice` have high-entropy passwords resilient to brute-force or dictionary attacks, Bob's password was intentionally kept weak (`test`). The attacker easily logs in as `bob` to establish a foothold.
+2. An unauthorized guest (`eve`) is still blocked because she has no read access to `/projects`.
+3. Direct access by `bob` to `/admin/flag.txt` is strictly blocked by DAC, MAC, and RBAC.
+4. An analyst insider (`bob`), upon discovering `/projects/shared_notes.txt` via `ls /projects`, requests:
+   ```text
+   sftp> get /projects/shared_notes.txt ./stolen_flag.txt
+   ```
+5. The server authorizes Bob for `/projects/shared_notes.txt`, opens the underlying target `/admin/flag.txt`, and delivers the flag:
+   ```text
+   FLAG{group06_sftp_wins}
+   ```
+
+### Evidence of Successful Exploitation
+The exploit was executed and verified against the running server session:
+
+![Exploitation Session](images/Attack.png)
+
+The audit trail recorded in `server/audit.jsonl` demonstrates the confused deputy behavior:
+
+```json
+{"user":"bob","op":"read","path":"/projects/shared_notes.txt","allowed":true,"reason":"DAC: group mode on /projects/shared_notes.txt allows read; MAC: clearance permits operation; RBAC: granted by role(s) base, analyst","timestamp":"2026-11-19T22:15:00.000000+00:00"}
+```
+*Notice that the server's audit log documents that access was granted for `/projects/shared_notes.txt`, while the client received the secret flag payload from `/admin/flag.txt`.*
+
+### Text Description of the Defensive Test Case & Fix
+A defensive unit test to detect and catch this vulnerability would:
+1. Create a temporary jail directory with a confidential folder (`/admin/flag.txt`, mode `600`, clearance `confidential`) and a public/internal folder (`/projects`).
+2. Create a symbolic link inside `/projects/link.txt` pointing to `/admin/flag.txt`.
+3. Instantiate an `SFTPSession` for an unprivileged user (`bob`, clearance `internal`).
+4. Attempt to resolve and authorize the link: `vpath, full = session._resolve(b"/projects/link.txt", "open")`.
+5. **Assert failure:** The test asserts that `session._authorize("read", vpath)` raises `PermissionError` (or returns `SSH_FX_PERMISSION_DENIED`). In a secure implementation, `_resolve()` must canonicalize the link target via `to_vpath(JAIL_ROOT, full)` so that `vpath` resolves to `/admin/flag.txt`, immediately triggering MAC "No Read Up" and DAC denials.
+
+---
+
+## 6. Conclusion
+
+By combining strict jail path canonicalization with a unified default-deny gate, our server enforces defense-in-depth where every direct attack vector is caught and recorded in `audit.jsonl`. For the peer-swap challenge, our pre-seeded symlink demonstrates the subtle real-world risk of Confused Deputy link resolution, illustrating why authorization engines must always resolve paths to their canonical targets before applying access control rules.
 

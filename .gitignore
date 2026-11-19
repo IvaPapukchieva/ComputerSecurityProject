@@ -16,3 +16,7 @@ __pycache__/
 
 # Partial downloads left by an interrupted client 'get'
 *.part
+
+# CTF exfiltrated test artifacts
+stolen_flag.txt
+

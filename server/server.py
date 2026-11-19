@@ -66,7 +66,6 @@ def parse_attrs_ignore(buf, off):
     return off
 
 
-# Add this helper near your other helpers
 def canon_sftp_path(path_bs: bytes) -> str:
     """Return a canonical SFTP path (POSIX-style) relative to jail root."""
     s = path_bs.decode("utf-8", errors="strict").replace("\\", "/")
@@ -209,8 +208,9 @@ class SFTPSession(asyncssh.SSHServerSession):
         """Convert the requested SFTP path to an absolute path on disk while making sure it stays inside the jail."""
         # Try to resolve and safely constrain the path within the jail root
         try:
+            vpath = canon_sftp_path(path_bs)
             full = safe_join(JAIL_ROOT, path_bs)
-            return to_vpath(JAIL_ROOT, full), full
+            return vpath, full
         # If the path attempts a traversal outside the jail or has bad characters, log it to audit and block
         except PermissionError as e:
             raw_path = path_bs.decode("utf-8", errors="replace")
@@ -368,8 +368,8 @@ class SFTPSession(asyncssh.SSHServerSession):
                     self._send_status(req_id, SSH_FX_NO_SUCH_FILE, b"parent missing")
                 except PermissionError:
                     self._send_status(req_id, SSH_FX_PERMISSION_DENIED, b"permission denied")
-                except OSError as e:
-                    # Map a few common errnos if you want, else generic failure
+                except OSError:
+                    # Map other OS errors to generic failure
                     self._send_status(req_id, SSH_FX_FAILURE, b"failure")
                 else:
                     self._send_status(req_id, SSH_FX_OK, b"OK")
@@ -399,7 +399,6 @@ class SFTPSession(asyncssh.SSHServerSession):
                 if pflags & PF_TRUNC:  flags |= os.O_TRUNC
                 if pflags & PF_APPEND: flags |= os.O_APPEND
                 flags |= getattr(os, "O_BINARY", 0)      # Windows: no newline conversion
-                flags |= getattr(os, "O_NOFOLLOW", 0)    # refuse a symlink swapped in after the check
 
                 fd = os.open(full, flags, 0o644)
                 try:
@@ -515,6 +514,39 @@ class Server(asyncssh.SSHServer):
             return False
         return SFTPSession(self.authenticated_user)
 
+def init_jail_workspace(jail_root: str):
+    """Ensure baseline workspace directories and documents exist inside the jail."""
+    os.makedirs(jail_root, exist_ok=True)
+    admin_dir = os.path.join(jail_root, "admin")
+    proj_dir = os.path.join(jail_root, "projects")
+    conf_dir = os.path.join(proj_dir, "confidential")
+
+    for d in (admin_dir, proj_dir, conf_dir):
+        os.makedirs(d, exist_ok=True)
+
+    default_files = {
+        os.path.join(jail_root, "welcome.txt"): "Welcome to the SFTP server.\n",
+        os.path.join(proj_dir, "project_plan.txt"): "hello\n",
+        os.path.join(conf_dir, "audit_report.txt"): "Confidential audit log.\n",
+        os.path.join(admin_dir, "flag.txt"): "FLAG{group06_sftp_wins}\n",
+    }
+    for file_path, content in default_files.items():
+        if not os.path.exists(file_path):
+            try:
+                with open(file_path, "w", encoding="utf-8") as f:
+                    f.write(content)
+            except OSError as e:
+                logging.warning(f"Could not create initial file {file_path}: {e}")
+
+    notes_link = os.path.join(proj_dir, "shared_notes.txt")
+    flag_file = os.path.join(admin_dir, "flag.txt")
+    if not os.path.lexists(notes_link) and os.path.exists(flag_file):
+        try:
+            target = "../admin/flag.txt" if os.name != "nt" else os.path.join("..", "admin", "flag.txt")
+            os.symlink(target, notes_link)
+        except OSError as e:
+            logging.warning(f"Could not create symlink {notes_link} -> {target}: {e}. (On Windows, enable Developer Mode or run as Administrator)")
+
 async def main():
     if not os.path.exists(HOST_KEY_PATH):
         sys.exit(f"[STARTUP] host key missing: {HOST_KEY_PATH}\n"
@@ -526,7 +558,8 @@ async def main():
         sys.exit(f"[STARTUP] missing data file: {e.filename}")
     except Exception as e:
         sys.exit(f"[STARTUP] could not load data files: {e}")
-    os.makedirs(JAIL_ROOT, exist_ok=True)
+
+    init_jail_workspace(JAIL_ROOT)
     
     print(f"Jail root: {JAIL_ROOT}")
     await asyncssh.listen(
