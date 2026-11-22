@@ -21,6 +21,10 @@ EXCLUDE_FILES = {
     "stolen_flag.txt",
     "CTF_writeup.md",
     ".gitignore",
+    "ssh_host_ed25519_key",
+    "ssh_host_ed25519_key.pub",
+    "known_hosts",
+    "audit.jsonl",
 }
 
 def build_zip():
