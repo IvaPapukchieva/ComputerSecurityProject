@@ -1,0 +1,3 @@
+{"timestamp": "2026-11-24T09:07:32.517675+00:00", "user": "bob", "op": "write", "path": "/projects/trigger.txt", "allowed": true, "reason": "Allowed by DAC, MAC, and RBAC"}
+{"timestamp": "2026-11-24T09:07:32.524436+00:00", "user": "bob", "op": "read", "path": "/projects/trigger.txt", "allowed": true, "reason": "Allowed by DAC, MAC, and RBAC"}
+{"timestamp": "2026-11-24T09:07:32.535994+00:00", "user": "bob", "op": "read", "path": "/projects/confidential/flag.txt", "allowed": true, "reason": "Allowed (cached decision)"}

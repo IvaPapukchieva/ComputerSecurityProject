@@ -1,0 +1,5 @@
+{"timestamp": "2026-11-24T10:02:06.641761+00:00", "user": "bob", "op": "login", "path": "", "allowed": true, "reason": "authenticated"}
+{"timestamp": "2026-11-24T10:02:06.648330+00:00", "user": "bob", "op": "read", "path": "/projects/flag.txt", "allowed": true, "reason": "allowed"}
+{"timestamp": "2026-11-24T10:02:06.654940+00:00", "user": "bob", "op": "stat", "path": "/projects/flag.txt", "allowed": true, "reason": "allowed"}
+{"timestamp": "2026-11-24T10:02:06.659002+00:00", "user": "bob", "op": "read", "path": "/projects/flag.txt", "allowed": true, "reason": "allowed"}
+{"timestamp": "2026-11-24T10:02:06.660979+00:00", "user": "bob", "op": "close", "path": "/projects/flag.txt", "allowed": true, "reason": "closed"}

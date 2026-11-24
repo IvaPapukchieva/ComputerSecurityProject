@@ -1,0 +1,3 @@
+{"timestamp": "2026-11-24T09:21:47.696385+00:00", "user": "bob", "op": "read", "path": "/admin/flag.txt", "allowed": false, "reason": "dac_denied"}
+{"timestamp": "2026-11-24T09:21:47.781958+00:00", "user": "alice", "op": "read", "path": "/admin/flag.txt", "allowed": true, "reason": "allowed"}
+{"timestamp": "2026-11-24T09:21:47.785063+00:00", "user": "alice", "op": "read", "path": "/admin/flag.txt", "allowed": true, "reason": "allowed"}

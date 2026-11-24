@@ -1,0 +1,44 @@
+{"timestamp": "2026-11-24T09:44:10+00:00", "user": "eve", "op": "login", "path": null, "allowed": true, "reason": "ok"}
+{"timestamp": "2026-11-24T09:44:10+00:00", "user": "eve", "op": "read", "path": "/projects/confidential/flag.txt", "allowed": false, "reason": "denied: DAC: other lacks 0o4 on /projects/confidential (file mode 0o660); MAC: no read up (public -> confidential); RBAC: denied (read) for roles ['guest'] on /projects/confidential/flag.txt"}
+{"timestamp": "2026-11-24T09:44:10+00:00", "user": "eve", "op": "stat", "path": "/projects/confidential/flag.txt", "allowed": false, "reason": "denied: DAC: other lacks 0o4 on /projects/confidential (file mode 0o660); MAC: no read up (public -> confidential); RBAC: denied (read) for roles ['guest'] on /projects/confidential/flag.txt"}
+{"timestamp": "2026-11-24T09:44:11+00:00", "user": "alice", "op": "login", "path": null, "allowed": true, "reason": "ok"}
+{"timestamp": "2026-11-24T09:44:11+00:00", "user": "alice", "op": "read", "path": "/projects/confidential/flag.txt", "allowed": false, "reason": "denied: MAC: no read up (internal -> confidential)"}
+{"timestamp": "2026-11-24T09:44:11+00:00", "user": "alice", "op": "read", "path": "/projects/confidential/flag.txt", "allowed": false, "reason": "denied: MAC: no read up (internal -> confidential)"}
+{"timestamp": "2026-11-24T09:44:11+00:00", "user": "bob", "op": "login", "path": null, "allowed": true, "reason": "ok"}
+{"timestamp": "2026-11-24T09:44:11+00:00", "user": "bob", "op": "read", "path": "/projects/confidential/flag.txt", "allowed": false, "reason": "denied: DAC: other lacks 0o4 on /projects/confidential (file mode 0o660); MAC: no read up (internal -> confidential)"}
+{"timestamp": "2026-11-24T09:44:11+00:00", "user": "carol", "op": "login", "path": null, "allowed": true, "reason": "ok"}
+{"timestamp": "2026-11-24T09:44:11+00:00", "user": "carol", "op": "read", "path": "/projects/confidential/flag.txt", "allowed": true, "reason": "allowed: DAC: owner has 0o4 on /projects/confidential (file mode 0o660); MAC: confidential may read confidential; RBAC: allowed (read) via analyst:/projects"}
+{"timestamp": "2026-11-24T09:44:11+00:00", "user": "alice", "op": "write", "path": "/projects/confidential/flag.txt", "allowed": true, "reason": "allowed: DAC: group has 0o2 on /projects/confidential (file mode 0o660); MAC: internal may write confidential; RBAC: allowed (write) via analyst:/projects"}
+{"timestamp": "2026-11-24T09:44:11+00:00", "user": "alice", "op": "login", "path": null, "allowed": true, "reason": "ok"}
+{"timestamp": "2026-11-24T09:44:11+00:00", "user": "alice", "op": "write", "path": "/projects/confidential/flag.txt", "allowed": true, "reason": "allowed: DAC: group has 0o2 on /projects/confidential (file mode 0o660); MAC: internal may write confidential; RBAC: allowed (write) via analyst:/projects"}
+{"timestamp": "2026-11-24T09:44:11+00:00", "user": "carol", "op": "login", "path": null, "allowed": true, "reason": "ok"}
+{"timestamp": "2026-11-24T09:44:11+00:00", "user": "carol", "op": "read", "path": "/projects/confidential/flag.txt", "allowed": true, "reason": "allowed: DAC: owner has 0o4 on /projects/confidential (file mode 0o660); MAC: confidential may read confidential; RBAC: allowed (read) via analyst:/projects"}
+{"timestamp": "2026-11-24T09:44:12+00:00", "user": "carol", "op": "login", "path": null, "allowed": true, "reason": "ok"}
+{"timestamp": "2026-11-24T09:44:12+00:00", "user": "carol", "op": "login", "path": null, "allowed": false, "reason": "wrong password"}
+{"timestamp": "2026-11-24T09:44:12+00:00", "user": "carol", "op": "login", "path": null, "allowed": false, "reason": "wrong password"}
+{"timestamp": "2026-11-24T09:44:12+00:00", "user": "carol", "op": "login", "path": null, "allowed": false, "reason": "wrong password"}
+{"timestamp": "2026-11-24T09:44:12+00:00", "user": "carol", "op": "login", "path": null, "allowed": false, "reason": "wrong password"}
+{"timestamp": "2026-11-24T09:44:12+00:00", "user": "carol", "op": "login", "path": null, "allowed": false, "reason": "wrong password, account locked for 60s"}
+{"timestamp": "2026-11-24T09:44:12+00:00", "user": "carol", "op": "login", "path": null, "allowed": false, "reason": "account locked"}
+{"timestamp": "2026-11-24T10:02:02+00:00", "user": "eve", "op": "login", "path": null, "allowed": true, "reason": "ok"}
+{"timestamp": "2026-11-24T10:02:02+00:00", "user": "eve", "op": "read", "path": "/projects/confidential/flag.txt", "allowed": false, "reason": "denied: DAC: other lacks 0o4 on /projects/confidential (file mode 0o660); MAC: no read up (public -> confidential); RBAC: denied (read) for roles ['guest'] on /projects/confidential/flag.txt"}
+{"timestamp": "2026-11-24T10:02:02+00:00", "user": "eve", "op": "stat", "path": "/projects/confidential/flag.txt", "allowed": false, "reason": "denied: DAC: other lacks 0o4 on /projects/confidential (file mode 0o660); MAC: no read up (public -> confidential); RBAC: denied (read) for roles ['guest'] on /projects/confidential/flag.txt"}
+{"timestamp": "2026-11-24T10:02:02+00:00", "user": "alice", "op": "login", "path": null, "allowed": true, "reason": "ok"}
+{"timestamp": "2026-11-24T10:02:02+00:00", "user": "alice", "op": "read", "path": "/projects/confidential/flag.txt", "allowed": false, "reason": "denied: MAC: no read up (internal -> confidential)"}
+{"timestamp": "2026-11-24T10:02:02+00:00", "user": "alice", "op": "read", "path": "/projects/confidential/flag.txt", "allowed": false, "reason": "denied: MAC: no read up (internal -> confidential)"}
+{"timestamp": "2026-11-24T10:02:03+00:00", "user": "bob", "op": "login", "path": null, "allowed": true, "reason": "ok"}
+{"timestamp": "2026-11-24T10:02:03+00:00", "user": "bob", "op": "read", "path": "/projects/confidential/flag.txt", "allowed": false, "reason": "denied: DAC: other lacks 0o4 on /projects/confidential (file mode 0o660); MAC: no read up (internal -> confidential)"}
+{"timestamp": "2026-11-24T10:02:03+00:00", "user": "carol", "op": "login", "path": null, "allowed": true, "reason": "ok"}
+{"timestamp": "2026-11-24T10:02:03+00:00", "user": "carol", "op": "read", "path": "/projects/confidential/flag.txt", "allowed": true, "reason": "allowed: DAC: owner has 0o4 on /projects/confidential (file mode 0o660); MAC: confidential may read confidential; RBAC: allowed (read) via analyst:/projects"}
+{"timestamp": "2026-11-24T10:02:03+00:00", "user": "alice", "op": "write", "path": "/projects/confidential/flag.txt", "allowed": true, "reason": "allowed: DAC: group has 0o2 on /projects/confidential (file mode 0o660); MAC: internal may write confidential; RBAC: allowed (write) via analyst:/projects"}
+{"timestamp": "2026-11-24T10:02:03+00:00", "user": "alice", "op": "login", "path": null, "allowed": true, "reason": "ok"}
+{"timestamp": "2026-11-24T10:02:03+00:00", "user": "alice", "op": "write", "path": "/projects/confidential/flag.txt", "allowed": true, "reason": "allowed: DAC: group has 0o2 on /projects/confidential (file mode 0o660); MAC: internal may write confidential; RBAC: allowed (write) via analyst:/projects"}
+{"timestamp": "2026-11-24T10:02:03+00:00", "user": "carol", "op": "login", "path": null, "allowed": true, "reason": "ok"}
+{"timestamp": "2026-11-24T10:02:03+00:00", "user": "carol", "op": "read", "path": "/projects/confidential/flag.txt", "allowed": true, "reason": "allowed: DAC: owner has 0o4 on /projects/confidential (file mode 0o660); MAC: confidential may read confidential; RBAC: allowed (read) via analyst:/projects"}
+{"timestamp": "2026-11-24T10:02:04+00:00", "user": "carol", "op": "login", "path": null, "allowed": true, "reason": "ok"}
+{"timestamp": "2026-11-24T10:02:04+00:00", "user": "carol", "op": "login", "path": null, "allowed": false, "reason": "wrong password"}
+{"timestamp": "2026-11-24T10:02:04+00:00", "user": "carol", "op": "login", "path": null, "allowed": false, "reason": "wrong password"}
+{"timestamp": "2026-11-24T10:02:04+00:00", "user": "carol", "op": "login", "path": null, "allowed": false, "reason": "wrong password"}
+{"timestamp": "2026-11-24T10:02:04+00:00", "user": "carol", "op": "login", "path": null, "allowed": false, "reason": "wrong password"}
+{"timestamp": "2026-11-24T10:02:04+00:00", "user": "carol", "op": "login", "path": null, "allowed": false, "reason": "wrong password, account locked for 60s"}
+{"timestamp": "2026-11-24T10:02:04+00:00", "user": "carol", "op": "login", "path": null, "allowed": false, "reason": "account locked"}
