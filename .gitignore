@@ -20,3 +20,8 @@ __pycache__/
 # CTF exfiltrated test artifacts
 stolen_flag.txt
 
+# Targets: unpack your 5 groups locally (gitignored)
+targets/*
+!targets/.gitkeep
+
+
