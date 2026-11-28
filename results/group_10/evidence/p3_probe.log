@@ -1,0 +1,23 @@
+$ python tests\p3\p3_probe.py g10
+AuthN:
+  alice  correct password -> OK
+  bob    correct password -> OK
+  carol  correct password -> OK
+  eve    correct password -> OK
+  alice  wrong password -> rejected
+
+AuthZ (expect = the group's own stated rule):
+  eve    read  /public/welcome.txt                 -> allow    (expect allow) ok
+  eve    list  /projects                           -> deny     (expect deny) ok
+  eve    read  /projects/flag.txt                  -> deny     (expect deny) ok
+  bob    read  /projects/flag.txt                  -> allow    (expect allow) ok
+  bob    write /public/x.txt                       -> deny     (expect deny) ok
+  carol  read  /projects/flag.txt                  -> allow    (expect allow) ok
+
+Lockout:
+  flooded 5 wrong passwords for bob
+  bob correct password now -> REJECTED (lockout blocks the real user)
+
+# NOTE: demo passwords were set with tests/p3/p3_setpw.py only to enable login
+# (the shipped users.json holds hashes of discarded random passwords per their
+# README); the original file was restored with --restore after this run.

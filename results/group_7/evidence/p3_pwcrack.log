@@ -1,0 +1,8 @@
+$ python tests\p3\pw_try7.py targets\DreamTeam7\server\data\users.json
+alice    -> (no match)
+bob      -> (no match)
+carol    -> (no match)
+eve      -> (no match)
+
+# ~45 common/guessable passwords tried offline against the stored scrypt hashes.
+# None matched. Group 7's passwords resist the dictionary (unlike Group 5).

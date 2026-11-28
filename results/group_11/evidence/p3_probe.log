@@ -1,0 +1,21 @@
+$ python tests\p3\p3_probe.py g11
+AuthN:
+  alice  correct password -> OK
+  bob    correct password -> OK
+  eve    correct password -> OK
+  alice  wrong password -> rejected
+
+AuthZ (expect = the group's own stated rule):
+  eve    list  /public                             -> allow    (expect allow) ok
+  eve    list  /projects                           -> deny     (expect deny) ok
+  eve    read  /projects/confidential/flag.txt     -> deny     (expect deny) ok
+  bob    list  /projects                           -> allow    (expect allow) ok
+  bob    read  /projects/confidential/flag.txt     -> deny     (expect deny) ok
+  bob    write /projects/confidential/flag.txt     -> deny     (expect deny) ok
+  alice  read  /projects/confidential/flag.txt     -> allow    (expect allow) ok
+  alice  list  /admin                              -> allow    (expect allow) ok
+
+# NOTE: demo passwords set with tests/p3/p3_setpw.py only to enable login for
+# alice/eve (their real passwords are the Assignment-1 samples; bob's is 'test',
+# see p3_pwcrack.log); original users.json restored with --restore after this run.
+# No lockout step here: Group 11 rate-limits per IP, not per username.

@@ -1,0 +1,9 @@
+$ python tests\p3\pw_try.py targets\DreamTeam11\data\users.json
+alice    -> (none of the candidates matched)
+bob      -> 'test'
+eve      -> (none of the candidates matched)
+
+# bob's password is 'test'. Its salt AND hash are byte-identical to the shared
+# Assignment-1 dataset (same record as Group 6's bob), confirming the passwords
+# are the reused Assignment-1 samples rather than freshly generated ones.
+# alice and eve did not fall to the candidate list.

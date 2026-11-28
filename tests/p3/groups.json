@@ -35,5 +35,70 @@
       {"user": "alice", "op": "read", "path": "/admin/flag.txt", "expect": "allow"}
     ],
     "lockout": {"victim": "bob", "wrong_attempts": 5}
+  },
+  "g7": {
+    "host": "127.0.0.1",
+    "port": 2222,
+    "hostkey_pub": "targets/DreamTeam7/server/ssh_host_ed25519_key.pub",
+    "creds": {
+      "alice": "p3testpw",
+      "bob": "p3testpw",
+      "carol": "p3testpw",
+      "eve": "p3testpw"
+    },
+    "flag": "/projects/confidential/flag.txt",
+    "authz_probes": [
+      {"user": "eve", "op": "list", "path": "/public", "expect": "allow"},
+      {"user": "eve", "op": "list", "path": "/", "expect": "deny"},
+      {"user": "eve", "op": "read", "path": "/projects/confidential/flag.txt", "expect": "deny"},
+      {"user": "alice", "op": "write", "path": "/projects/plan.txt", "expect": "allow"},
+      {"user": "alice", "op": "read", "path": "/projects/confidential/flag.txt", "expect": "deny"},
+      {"user": "bob", "op": "list", "path": "/projects", "expect": "deny"},
+      {"user": "bob", "op": "read", "path": "/projects/confidential/flag.txt", "expect": "deny"},
+      {"user": "carol", "op": "read", "path": "/projects/confidential/flag.txt", "expect": "allow"}
+    ],
+    "lockout": {"victim": "bob", "wrong_attempts": 5}
+  },
+  "g10": {
+    "host": "127.0.0.1",
+    "port": 2222,
+    "hostkey_pub": "targets/DreamTeam10/server/ssh_host_ed25519_key.pub",
+    "creds": {
+      "alice": "p3testpw",
+      "bob": "p3testpw",
+      "carol": "p3testpw",
+      "eve": "p3testpw"
+    },
+    "flag": "/projects/flag.txt",
+    "authz_probes": [
+      {"user": "eve", "op": "read", "path": "/public/welcome.txt", "expect": "allow"},
+      {"user": "eve", "op": "list", "path": "/projects", "expect": "deny"},
+      {"user": "eve", "op": "read", "path": "/projects/flag.txt", "expect": "deny"},
+      {"user": "bob", "op": "read", "path": "/projects/flag.txt", "expect": "allow"},
+      {"user": "bob", "op": "write", "path": "/public/x.txt", "expect": "deny"},
+      {"user": "carol", "op": "read", "path": "/projects/flag.txt", "expect": "allow"}
+    ],
+    "lockout": {"victim": "bob", "wrong_attempts": 5}
+  },
+  "g11": {
+    "host": "127.0.0.1",
+    "port": 2222,
+    "hostkey_pub": "targets/DreamTeam11/server/ssh_host_ed25519_key.pub",
+    "creds": {
+      "alice": "p3testpw",
+      "bob": "p3testpw",
+      "eve": "p3testpw"
+    },
+    "flag": "/projects/confidential/flag.txt",
+    "authz_probes": [
+      {"user": "eve", "op": "list", "path": "/public", "expect": "allow"},
+      {"user": "eve", "op": "list", "path": "/projects", "expect": "deny"},
+      {"user": "eve", "op": "read", "path": "/projects/confidential/flag.txt", "expect": "deny"},
+      {"user": "bob", "op": "list", "path": "/projects", "expect": "allow"},
+      {"user": "bob", "op": "read", "path": "/projects/confidential/flag.txt", "expect": "deny"},
+      {"user": "bob", "op": "write", "path": "/projects/confidential/flag.txt", "expect": "deny"},
+      {"user": "alice", "op": "read", "path": "/projects/confidential/flag.txt", "expect": "allow"},
+      {"user": "alice", "op": "list", "path": "/admin", "expect": "allow"}
+    ]
   }
 }
