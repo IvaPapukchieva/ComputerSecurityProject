@@ -1,0 +1,17 @@
+{"timestamp": "2026-11-28T15:01:52.183412+00:00", "user": "bob", "op": "read", "path": "/admin/flag.txt", "allowed": false, "reason": "dac_denied"}
+{"timestamp": "2026-11-28T15:01:52.278934+00:00", "user": "alice", "op": "read", "path": "/admin/flag.txt", "allowed": true, "reason": "allowed"}
+{"timestamp": "2026-11-28T15:01:52.281286+00:00", "user": "alice", "op": "stat", "path": "/admin/flag.txt", "allowed": true, "reason": "allowed"}
+{"timestamp": "2026-11-28T15:01:52.285119+00:00", "user": "alice", "op": "read", "path": "/admin/flag.txt", "allowed": true, "reason": "allowed"}
+{"timestamp": "2026-11-28T15:02:33.730471+00:00", "user": "bob", "op": "list", "path": "/projects", "allowed": true, "reason": "allowed"}
+{"timestamp": "2026-11-28T15:02:33.742102+00:00", "user": "bob", "op": "list", "path": "/projects", "allowed": true, "reason": "allowed"}
+{"timestamp": "2026-11-28T15:02:33.832330+00:00", "user": "bob", "op": "write", "path": "/projects/p3_probe.txt", "allowed": true, "reason": "allowed"}
+{"timestamp": "2026-11-28T15:02:33.835351+00:00", "user": "bob", "op": "write", "path": "/projects/p3_probe.txt", "allowed": true, "reason": "allowed"}
+{"timestamp": "2026-11-28T15:02:33.945927+00:00", "user": "bob", "op": "list", "path": "/admin", "allowed": false, "reason": "dac_denied"}
+{"timestamp": "2026-11-28T15:02:34.038721+00:00", "user": "bob", "op": "read", "path": "/admin/flag.txt", "allowed": false, "reason": "dac_denied"}
+{"timestamp": "2026-11-28T15:02:34.128138+00:00", "user": "alice", "op": "list", "path": "/admin", "allowed": true, "reason": "allowed"}
+{"timestamp": "2026-11-28T15:02:34.130396+00:00", "user": "alice", "op": "list", "path": "/admin", "allowed": true, "reason": "allowed"}
+{"timestamp": "2026-11-28T15:02:34.131173+00:00", "user": "alice", "op": "stat", "path": "/admin/flag.txt", "allowed": true, "reason": "allowed"}
+{"timestamp": "2026-11-28T15:02:34.134467+00:00", "user": "alice", "op": "list", "path": "/admin", "allowed": true, "reason": "allowed"}
+{"timestamp": "2026-11-28T15:02:34.227575+00:00", "user": "alice", "op": "read", "path": "/admin/flag.txt", "allowed": true, "reason": "allowed"}
+{"timestamp": "2026-11-28T15:02:34.230033+00:00", "user": "alice", "op": "stat", "path": "/admin/flag.txt", "allowed": true, "reason": "allowed"}
+{"timestamp": "2026-11-28T15:02:34.232503+00:00", "user": "alice", "op": "read", "path": "/admin/flag.txt", "allowed": true, "reason": "allowed"}

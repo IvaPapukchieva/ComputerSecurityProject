@@ -1,0 +1,17 @@
+$ python tests\p3\p3_probe.py g5
+AuthN:
+  alice  correct password -> OK
+  bob    correct password -> OK
+  alice  wrong password -> rejected
+
+AuthZ (expect = the group's own stated rule):
+  bob    list  /projects                           -> allow    (expect allow) ok
+  bob    write /projects/p3_probe.txt              -> allow    (expect allow) ok
+  bob    list  /admin                              -> deny     (expect deny) ok
+  bob    read  /admin/flag.txt                     -> deny     (expect deny) ok
+  alice  list  /admin                              -> allow    (expect allow) ok
+  alice  read  /admin/flag.txt                     -> allow    (expect allow) ok
+
+Lockout:
+  flooded 5 wrong passwords for bob
+  bob correct password now -> REJECTED (lockout blocks the real user)

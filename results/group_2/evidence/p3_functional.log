@@ -1,0 +1,22 @@
+$ python -I tests\p3\g2_functional.py tests\p3\g2_known_hosts
+AuthN checks:
+  [AuthN] alice correct pw: LOGIN OK
+  [AuthN] alice wrong pw: rejected
+  [AuthN] eve correct pw: LOGIN OK
+
+AuthZ checks (expected per Group 2 README rules):
+  eve  list /public            -> DENIED (SFTPNoSuchFile)   (expect ALLOWED: owner)
+  eve  read /projects (ro)     -> DENIED (SFTPPermissionDenied)   (dir)
+  eve  write /projects/x.txt   -> DENIED (SFTPPermissionDenied)   (expect DENIED: other)
+  eve  list /admin             -> DENIED (SFTPPermissionDenied)   (expect DENIED)
+  eve  read flag               -> DENIED (SFTPPermissionDenied)   (expect DENIED)
+  alice list /projects         -> ALLOWED   (expect ALLOWED)
+  alice list /admin            -> DENIED (SFTPNoSuchFile)   (expect ALLOWED: owner)
+
+# NOTES (interpretation):
+# - SFTPPermissionDenied = authorization gate blocked it.
+# - SFTPNoSuchFile       = authz ALLOWED it, but the directory does not exist in the shipped jail.
+# - eve list /public / alice list /admin -> NoSuchFile: /public and /admin are referenced by
+#   policy + README but absent from sftp_root (informational, consistent with "initially empty jail").
+# - eve read /projects -> PermissionDenied contradicts README ("eve: read-only on /projects"):
+#   MAC (public<internal) and DAC (eve=other, mode ---) both deny it. Doc/behavior mismatch.

@@ -1,0 +1,39 @@
+{
+  "g2": {
+    "host": "127.0.0.1",
+    "port": 2222,
+    "hostkey_pub": "targets/DreamTeam2/server/ssh_host_ed25519_key.pub",
+    "creds": {
+      "alice": "alice-Prof-2026!",
+      "bob": "bob-TA-2026!",
+      "eve": "eve-Student-2026!"
+    },
+    "flag": "/projects/confidential/flag.txt",
+    "authz_probes": [
+      {"user": "eve", "op": "write", "path": "/projects/x.txt", "expect": "deny"},
+      {"user": "eve", "op": "list", "path": "/admin", "expect": "deny"},
+      {"user": "eve", "op": "read", "path": "/projects/confidential/flag.txt", "expect": "deny"},
+      {"user": "alice", "op": "list", "path": "/projects", "expect": "allow"}
+    ],
+    "lockout": {"victim": "bob", "wrong_attempts": 5}
+  },
+  "g5": {
+    "host": "127.0.0.1",
+    "port": 2222,
+    "hostkey_pub": "targets/DreamTeam5/server/ssh_host_ed25519_key.pub",
+    "creds": {
+      "alice": "alice",
+      "bob": "bob"
+    },
+    "flag": "/admin/flag.txt",
+    "authz_probes": [
+      {"user": "bob", "op": "list", "path": "/projects", "expect": "allow"},
+      {"user": "bob", "op": "write", "path": "/projects/p3_probe.txt", "expect": "allow"},
+      {"user": "bob", "op": "list", "path": "/admin", "expect": "deny"},
+      {"user": "bob", "op": "read", "path": "/admin/flag.txt", "expect": "deny"},
+      {"user": "alice", "op": "list", "path": "/admin", "expect": "allow"},
+      {"user": "alice", "op": "read", "path": "/admin/flag.txt", "expect": "allow"}
+    ],
+    "lockout": {"victim": "bob", "wrong_attempts": 5}
+  }
+}

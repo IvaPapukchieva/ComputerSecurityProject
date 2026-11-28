@@ -4,6 +4,9 @@ ssh_host_ed25519_key
 # Client TOFU store: per-machine
 client/known_hosts
 
+# Per-machine known_hosts generated from each target's public key
+tests/p3/*_known_hosts
+
 # Python bytecode / caches
 __pycache__/
 *.py[cod]

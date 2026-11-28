@@ -1,0 +1,21 @@
+{"timestamp": "2026-11-28T12:42:53.224242+00:00", "user": "alice", "op": "read", "path": "/projects/confidential/flag.txt", "allowed": true, "reason": "Allowed by DAC, MAC, and RBAC"}
+{"timestamp": "2026-11-28T12:42:53.226598+00:00", "user": "alice", "op": "stat", "path": "/projects/confidential/flag.txt", "allowed": true, "reason": "Allowed by DAC, MAC, and RBAC"}
+{"timestamp": "2026-11-28T12:42:53.228325+00:00", "user": "alice", "op": "read", "path": "/projects/confidential/flag.txt", "allowed": true, "reason": "Allowed (cached decision)"}
+{"timestamp": "2026-11-28T12:42:53.305269+00:00", "user": "bob", "op": "read", "path": "/projects/confidential/flag.txt", "allowed": false, "reason": "DAC deny: DAC: Denied for other lacking 'r' bit"}
+{"timestamp": "2026-11-28T12:42:53.383031+00:00", "user": "bob", "op": "write", "path": "/projects/pwn.txt", "allowed": true, "reason": "Allowed by DAC, MAC, and RBAC"}
+{"timestamp": "2026-11-28T12:42:53.385657+00:00", "user": "bob", "op": "write", "path": "/projects/pwn.txt", "allowed": true, "reason": "Allowed (cached decision)"}
+{"timestamp": "2026-11-28T12:42:53.388771+00:00", "user": "bob", "op": "read", "path": "/projects/pwn.txt", "allowed": true, "reason": "Allowed by DAC, MAC, and RBAC"}
+{"timestamp": "2026-11-28T12:42:53.390782+00:00", "user": "bob", "op": "stat", "path": "/projects/pwn.txt", "allowed": true, "reason": "Allowed by DAC, MAC, and RBAC"}
+{"timestamp": "2026-11-28T12:42:53.392448+00:00", "user": "bob", "op": "read", "path": "/projects/pwn.txt", "allowed": true, "reason": "Allowed (cached decision)"}
+{"timestamp": "2026-11-28T12:42:53.395163+00:00", "user": "bob", "op": "read", "path": "/projects/confidential/flag.txt", "allowed": true, "reason": "Allowed (cached decision)"}
+{"timestamp": "2026-11-28T12:42:53.397178+00:00", "user": "bob", "op": "stat", "path": "/projects/confidential/flag.txt", "allowed": true, "reason": "Allowed (cached decision)"}
+{"timestamp": "2026-11-28T12:42:53.398939+00:00", "user": "bob", "op": "read", "path": "/projects/confidential/flag.txt", "allowed": true, "reason": "Allowed (cached decision)"}
+{"timestamp": "2026-11-28T13:02:06.659661+00:00", "user": "eve", "op": "list", "path": "/public", "allowed": true, "reason": "Allowed by DAC, MAC, and RBAC"}
+{"timestamp": "2026-11-28T13:02:06.664814+00:00", "user": "eve", "op": "read", "path": "/projects", "allowed": false, "reason": "DAC deny: DAC: Denied for other lacking 'r' bit"}
+{"timestamp": "2026-11-28T13:02:06.666696+00:00", "user": "eve", "op": "write", "path": "/projects/x.txt", "allowed": false, "reason": "DAC deny: DAC: Denied for other lacking 'w' bit"}
+{"timestamp": "2026-11-28T13:02:06.668423+00:00", "user": "eve", "op": "list", "path": "/admin", "allowed": false, "reason": "DAC deny: DAC: Denied for other lacking 'r' bit"}
+{"timestamp": "2026-11-28T13:02:06.670112+00:00", "user": "eve", "op": "read", "path": "/projects/confidential/flag.txt", "allowed": false, "reason": "DAC deny: DAC: Denied for other lacking 'r' bit"}
+{"timestamp": "2026-11-28T13:02:06.740773+00:00", "user": "alice", "op": "list", "path": "/projects", "allowed": true, "reason": "Allowed by DAC, MAC, and RBAC"}
+{"timestamp": "2026-11-28T13:02:06.744541+00:00", "user": "alice", "op": "list", "path": "/projects", "allowed": true, "reason": "Allowed (cached decision)"}
+{"timestamp": "2026-11-28T13:02:06.746099+00:00", "user": "alice", "op": "list", "path": "/projects", "allowed": true, "reason": "Allowed (cached decision)"}
+{"timestamp": "2026-11-28T13:02:06.748880+00:00", "user": "alice", "op": "list", "path": "/admin", "allowed": true, "reason": "Allowed by DAC, MAC, and RBAC"}
